@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tic Tac Toe</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #121212;
+        color: #ffffff;
+      }
+      header {
+        text-align: center;
+        margin: 20px 0;
+      }
+      .main-container {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      .rules-container {
+        flex: 1;
+        padding-left: 20px;
+      }
+      .grid-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        grid-template-rows: repeat(3, 100px);
+        gap: 5px;
+        margin-bottom: 20px;
+      }
+      .cell {
+        width: 100px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3em;
+        border: 1px solid #ffffff;
+        cursor: pointer;
+      }
+      .x {
+        color: red;
+        font-weight: bold;
+      }
+      .o {
+        color: blue;
+        font-weight: bold;
+      }
+      .highlight.x {
+        color: rgba(255, 0, 0, 0.2);
+      }
+      .highlight.o {
+        color: rgba(0, 0, 255, 0.2);
+      }
+      #message {
+        font-size: 1.5em;
+        color: green;
+        text-align: center;
+        margin-top: 20px;
+      }
+      #restart {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 1em;
+        cursor: pointer;
+        background-color: #333;
+        color: #fff;
+        border: 1px solid #fff;
+      }
+      #restart:hover {
+        background-color: #444;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Tic Tac Toe</h1>
+    </header>
+    <div class="main-container">
+      <div class="rules-container" id="rules">
+        <h2>Game Rules</h2>
+        <ul>
+          <li>
+            Players take turns placing their marks ('X' or 'O') on the grid.
+          </li>
+          <li>
+            Each player can only have up to three marks on the board at a time.
+          </li>
+          <li>
+            When a fourth mark is placed, the oldest mark of that type is
+            removed.
+          </li>
+          <li>The oldest mark is highlighted before being removed.</li>
+          <li>
+            A player wins by getting three of their marks in a row, column, or
+            diagonal.
+          </li>
+        </ul>
+      </div>
+      <div class="grid-container">
+        <div class="grid" id="grid">
+          <div class="cell" data-index="0"></div>
+          <div class="cell" data-index="1"></div>
+          <div class="cell" data-index="2"></div>
+          <div class="cell" data-index="3"></div>
+          <div class="cell" data-index="4"></div>
+          <div class="cell" data-index="5"></div>
+          <div class="cell" data-index="6"></div>
+          <div class="cell" data-index="7"></div>
+          <div class="cell" data-index="8"></div>
+        </div>
+        <div id="message"></div>
+        <button id="restart" onclick="resetGame()">Restart Game</button>
+      </div>
+      <div style="flex: 1"></div>
+    </div>
+
+    <script>
+      const grid = document.getElementById("grid");
+      const message = document.getElementById("message");
+      let currentPlayer = "X";
+      let gameEnded = false;
+      const moves = { X: [], O: [] };
+
+      function clearHighlight() {
+        for (const cell of grid.children) {
+          cell.classList.remove("highlight");
+        }
+      }
+
+      function highlightOldestMove(player) {
+        if (moves[player].length >= 3) {
+          const oldestMoveIndex = moves[player][0];
+          grid.children[oldestMoveIndex].classList.add("highlight");
+        }
+      }
+
+      function checkWin(player) {
+        const winningCombinations = [
+          [0, 1, 2],
+          [3, 4, 5],
+          [6, 7, 8], // rows
+          [0, 3, 6],
+          [1, 4, 7],
+          [2, 5, 8], // columns
+          [0, 4, 8],
+          [2, 4, 6], // diagonals
+        ];
+        return winningCombinations.find((combination) =>
+          combination.every(
+            (index) =>
+              moves[player].includes(index) &&
+              !grid.children[index].classList.contains("highlight")
+          )
+        );
+      }
+
+      function showWinMessage(player) {
+        message.textContent = `${player} wins!`;
+        gameEnded = true;
+      }
+
+      function makeMove(index) {
+        if (gameEnded) return;
+        const cell = grid.children[index];
+        if (cell.textContent !== "") return;
+
+        cell.textContent = currentPlayer;
+        cell.classList.add(currentPlayer.toLowerCase());
+        moves[currentPlayer].push(index);
+
+        const winningCombination = checkWin(currentPlayer);
+        if (winningCombination) {
+          highlightWinningCombination(winningCombination);
+          setTimeout(() => {
+            showWinMessage(currentPlayer);
+          }, 500);
+          return;
+        }
+
+        if (moves[currentPlayer].length > 3) {
+          clearHighlight();
+          const oldestMove = moves[currentPlayer].shift();
+          grid.children[oldestMove].textContent = "";
+          grid.children[oldestMove].classList.remove(
+            currentPlayer.toLowerCase()
+          );
+        }
+
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        highlightOldestMove(currentPlayer);
+      }
+
+      function highlightWinningCombination(combination) {
+        combination.forEach((index) => {
+          grid.children[index].classList.add("win");
+        });
+      }
+
+      function resetGame() {
+        for (const cell of grid.children) {
+          cell.textContent = "";
+          cell.classList.remove("highlight", "x", "o", "win");
+        }
+        moves.X = [];
+        moves.O = [];
+        currentPlayer = "X";
+        message.textContent = "";
+        gameEnded = false;
+        highlightOldestMove(currentPlayer);
+      }
+
+      for (const cell of grid.children) {
+        cell.addEventListener("click", () =>
+          makeMove(parseInt(cell.dataset.index))
+        );
+      }
+
+      highlightOldestMove(currentPlayer);
+    </script>
+  </body>
+</html>
